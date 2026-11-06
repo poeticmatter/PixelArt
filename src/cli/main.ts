@@ -2,8 +2,10 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 
+import { describeAsset, renderAssetForExport } from "../core/assetSummary.ts";
+import { getExportStem } from "../core/exportNaming.ts";
 import type { Library } from "../core/library.ts";
-import { renderAsset } from "../core/render.ts";
+import { createSheetMetadata } from "../core/spriteSheet.ts";
 import type { LibraryEntry } from "../core/types.ts";
 import { DEFAULT_LIBRARY_DIRECTORY, loadLibraryFromDisk } from "./diskLibrary.ts";
 import { encodePng } from "./png.ts";
@@ -15,6 +17,7 @@ const USAGE = `Usage:
       Validate every asset in library/.
   npm run export -- [asset-id ...] [--scale N] [--out DIR]
       Export assets as PNG (all assets when no ids are given).
+      Sprite sheets also get a .json file with each animation's frame rectangles and timings.
       Ids are library-relative paths without .json, e.g. cats/cat-2-color.
       --scale  Integer upscale factor, default 1.
       --out    Output directory, default exports/.`;
@@ -31,7 +34,7 @@ function reportInvalidEntries(library: Library): void {
 function runValidate(): number {
   const library = loadLibraryFromDisk();
   for (const { id, asset } of library.entries) {
-    console.log(`✓ ${id}  (${asset.width}×${asset.height}, ${asset.palette.length} colors)`);
+    console.log(`✓ ${id}  (${describeAsset(asset)})`);
   }
   reportInvalidEntries(library);
   console.log(`\n${library.entries.length} valid, ${library.invalidEntries.length} invalid in ${DEFAULT_LIBRARY_DIRECTORY}`);
@@ -58,12 +61,19 @@ function parseScale(rawScale: string): number {
   return scale;
 }
 
-function exportEntry(entry: LibraryEntry, scale: number, outputDirectory: string): string {
-  const suffix = scale === 1 ? "" : `@${scale}x`;
-  const outputPath = path.join(outputDirectory, `${entry.id}${suffix}.png`);
-  mkdirSync(path.dirname(outputPath), { recursive: true });
-  writeFileSync(outputPath, encodePng(renderAsset(entry.asset, scale)));
-  return outputPath;
+/** Writes the PNG, plus frame metadata for sprite sheets; returns the paths written. */
+function exportEntry(entry: LibraryEntry, scale: number, outputDirectory: string): string[] {
+  const stemPath = path.join(outputDirectory, getExportStem(entry.id, scale));
+  const pngPath = `${stemPath}.png`;
+  mkdirSync(path.dirname(pngPath), { recursive: true });
+  writeFileSync(pngPath, encodePng(renderAssetForExport(entry.asset, scale)));
+  if (entry.asset.type === "image") {
+    return [pngPath];
+  }
+  const metadataPath = `${stemPath}.json`;
+  const metadata = createSheetMetadata(entry.asset, path.basename(pngPath), scale);
+  writeFileSync(metadataPath, `${JSON.stringify(metadata, null, 2)}\n`);
+  return [pngPath, metadataPath];
 }
 
 function runExport(commandArgs: string[]): number {
@@ -80,7 +90,9 @@ function runExport(commandArgs: string[]): number {
   reportInvalidEntries(library);
 
   for (const entry of selectEntries(library, positionals)) {
-    console.log(`→ ${exportEntry(entry, scale, path.resolve(values.out))}`);
+    for (const writtenPath of exportEntry(entry, scale, path.resolve(values.out))) {
+      console.log(`→ ${writtenPath}`);
+    }
   }
   return library.invalidEntries.length === 0 ? 0 : 1;
 }

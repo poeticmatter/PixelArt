@@ -2,8 +2,8 @@ import { inflateSync } from "node:zlib";
 
 import { describe, expect, it } from "vitest";
 
-import { renderAsset } from "../core/render.ts";
-import { createTestAsset } from "../core/testAssets.ts";
+import { renderImage } from "../core/render.ts";
+import { createTestImage } from "../core/testAssets.ts";
 import { encodePng } from "./png.ts";
 
 const SIGNATURE_LENGTH = 8;
@@ -36,7 +36,7 @@ function getChunkPayload(chunks: Chunk[], type: string): Buffer {
 }
 
 describe("encodePng", () => {
-  const image = renderAsset(createTestAsset(), 2);
+  const image = renderImage(createTestImage(), 2);
   const png = encodePng(image);
   const chunks = readChunks(png);
 

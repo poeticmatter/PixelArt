@@ -1,6 +1,7 @@
+import { AnimationClock } from "./animation/animationClock.ts";
 import { loadLibraryFromBundle } from "./browserLibrary.ts";
-import { DetailView } from "./detailView.ts";
-import { renderGallery } from "./gallery.ts";
+import { DetailView } from "./detail/detailView.ts";
+import { renderGallery } from "./gallery/gallery.ts";
 
 function getRequiredElement(id: string): HTMLElement {
   const element = document.getElementById(id);
@@ -16,10 +17,11 @@ function describeLibrary(validCount: number, invalidCount: number): string {
 }
 
 const library = loadLibraryFromBundle();
-const detailView = new DetailView(library.entries);
+const clock = new AnimationClock();
+const detailView = new DetailView(library.entries, clock);
 
 getRequiredElement("library-summary").textContent = describeLibrary(
   library.entries.length,
   library.invalidEntries.length,
 );
-renderGallery(getRequiredElement("gallery"), library, (entry) => detailView.open(entry));
+renderGallery(getRequiredElement("gallery"), library, { clock, onSelect: (entry) => detailView.open(entry) });

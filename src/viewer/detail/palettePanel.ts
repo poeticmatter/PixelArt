@@ -1,18 +1,22 @@
-import type { PixelAsset } from "../core/types.ts";
-import { createElement } from "./dom.ts";
+import { getAllPixelMatrices } from "../../core/assetSummary.ts";
+import type { Asset } from "../../core/types.ts";
+import { createElement, createSidebarSection } from "../dom.ts";
 
-export function countPixelsByColorIndex(asset: PixelAsset): number[] {
+/** How often each palette index is used, summed over every frame of a sprite sheet. */
+export function countPixelsByColorIndex(asset: Asset): number[] {
   const counts = asset.palette.map(() => 0);
-  for (const row of asset.pixels) {
-    for (const colorIndex of row) {
-      counts[colorIndex] = (counts[colorIndex] ?? 0) + 1;
+  for (const matrix of getAllPixelMatrices(asset)) {
+    for (const row of matrix) {
+      for (const colorIndex of row) {
+        counts[colorIndex] = (counts[colorIndex] ?? 0) + 1;
+      }
     }
   }
   return counts;
 }
 
 /** Lists every palette color with its index, so the pixel matrix can be read alongside the image. */
-export function createPalettePanel(asset: PixelAsset): HTMLElement {
+export function createPalettePanel(asset: Asset): HTMLElement {
   const pixelCounts = countPixelsByColorIndex(asset);
   const rows = asset.palette.map((entry, index) =>
     createElement("li", { className: "palette__row" }, [
@@ -25,8 +29,5 @@ export function createPalettePanel(asset: PixelAsset): HTMLElement {
       createElement("span", { className: "palette__count", text: `${pixelCounts[index] ?? 0} px` }),
     ]),
   );
-  return createElement("section", { className: "detail__section" }, [
-    createElement("h3", { text: `Palette (${asset.palette.length})` }),
-    createElement("ol", { className: "palette" }, rows),
-  ]);
+  return createSidebarSection(`Palette (${asset.palette.length})`, [createElement("ol", { className: "palette" }, rows)]);
 }

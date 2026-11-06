@@ -1,8 +1,10 @@
 # Pixel Art Library
 
-Pixel art stored as plain data: a small named palette, plus a matrix of palette indices. Assets
-live as JSON files in `library/`. A browser viewer shows them all as thumbnails. Any asset can
-be opened, zoomed and exported as a lossless PNG.
+Pixel art for video games, stored as plain data: a small named palette, plus matrices of palette
+indices. Assets live as JSON files in `library/` and are either still **images** or **sprite
+sheets** (a character's named animations, such as idle, walk and jump). A browser viewer shows them
+all as thumbnails, with sprite sheets animating in place. Any asset can be opened, zoomed and
+exported as a lossless PNG.
 
 Designed so Claude Code can generate art directly. See [CLAUDE.md](CLAUDE.md) for the asset
 format and authoring workflow.
@@ -26,7 +28,12 @@ Open http://localhost:5173. Adding or editing a file in `library/` reloads the p
 - **Detail view** (click a thumbnail): integer zoom from 1× to 64×, checkerboard/dark/light
   backgrounds, an optional pixel grid, the palette with indices and per-color pixel counts, and
   PNG export at 1× or at the current zoom.
-- Keys in the detail view: `+`/`-` zoom, `0` fit, `g` grid, `←`/`→` previous/next, `Esc` close.
+- **Sprite sheets** in the detail view: pick an animation, play/pause, step frame by frame,
+  click a frame in the strip, or show the whole sheet as it will export. Export the sheet PNG at
+  1× or at zoom, plus a frame-data JSON (frame rectangles, durations, loop flags) for your engine.
+- Keys in the detail view: `+`/`-` zoom, `0` fit, `g` grid, `←`/`→` previous/next asset,
+  `Esc` close. For sprite sheets: `Space` play/pause, `,`/`.` step frames, `↑`/`↓`
+  switch animation, `s` toggle the whole sheet.
 
 ## Command line
 
@@ -38,9 +45,12 @@ npm run validate
 npm run export -- cats/cat-16-color --scale 8
 ```
 
-Exports go to `exports/` by default. With no ids, every asset is exported.
+Exports go to `exports/` by default. With no ids, every asset is exported. A sprite sheet writes
+`<name>.png` (one row per animation, one column per frame) and `<name>.json` with each
+frame's rectangle and duration at the exported scale.
 
 ## Examples
 
 `library/cats/` has the same cat drawn at four palette sizes: 2 and 4 colors on 8×8, and 8 and
-16 colors on 16×16.
+16 colors on 16×16. `cats/grey-tabby-sprites` is the grey tabby as a side-view game character
+with idle, walk and jump animations.

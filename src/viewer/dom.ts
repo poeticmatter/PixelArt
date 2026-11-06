@@ -23,3 +23,17 @@ export function createElement<Tag extends keyof HTMLElementTagNameMap>(
   element.append(...children);
   return element;
 }
+
+export function createButton(label: string, onClick: () => void, title?: string): HTMLButtonElement {
+  const button = createElement("button", { text: label, attributes: { type: "button", title: title ?? label } });
+  button.addEventListener("click", onClick);
+  return button;
+}
+
+export function createLabeledControl(label: string, control: HTMLElement): HTMLElement {
+  return createElement("label", { className: "control" }, [createElement("span", { text: label }), control]);
+}
+
+export function createSidebarSection(title: string, children: Node[]): HTMLElement {
+  return createElement("section", { className: "detail__section" }, [createElement("h3", { text: title }), ...children]);
+}

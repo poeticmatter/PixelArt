@@ -1,26 +1,28 @@
-import { getAssetFolder, type Library } from "../core/library.ts";
-import type { InvalidLibraryEntry, LibraryEntry } from "../core/types.ts";
-import { drawAsset, getFittingScale } from "./canvas.ts";
-import { createElement } from "./dom.ts";
+import { describeAsset } from "../../core/assetSummary.ts";
+import { getAssetFolder, type Library } from "../../core/library.ts";
+import type { InvalidLibraryEntry, LibraryEntry } from "../../core/types.ts";
+import type { AnimationClock } from "../animation/animationClock.ts";
+import { createElement } from "../dom.ts";
+import { createThumbnail } from "./thumbnail.ts";
 
-const THUMBNAIL_SIZE = 128;
 const TOP_LEVEL_FOLDER_LABEL = "Library";
 
-export function describeAsset(entry: LibraryEntry): string {
-  const { width, height, palette } = entry.asset;
-  return `${width}×${height} · ${palette.length} colors`;
+export interface GalleryOptions {
+  clock: AnimationClock;
+  onSelect: (entry: LibraryEntry) => void;
 }
 
-function createThumbnailCard(entry: LibraryEntry, onSelect: (entry: LibraryEntry) => void): HTMLElement {
-  const canvas = createElement("canvas", { className: "pixel-canvas" });
-  drawAsset(canvas, entry.asset, getFittingScale(entry.asset, THUMBNAIL_SIZE));
-
+function createThumbnailCard(entry: LibraryEntry, options: GalleryOptions): HTMLElement {
+  const isAnimated = entry.asset.type === "spritesheet";
   const card = createElement("button", { className: "asset-card", attributes: { type: "button", title: entry.id } }, [
-    createElement("div", { className: "asset-card__preview checkerboard" }, [canvas]),
+    createElement("div", { className: "asset-card__preview checkerboard" }, [createThumbnail(entry.asset, options.clock)]),
     createElement("span", { className: "asset-card__name", text: entry.asset.name }),
-    createElement("span", { className: "asset-card__meta", text: describeAsset(entry) }),
+    createElement("span", { className: "asset-card__meta", text: describeAsset(entry.asset) }),
   ]);
-  card.addEventListener("click", () => onSelect(entry));
+  if (isAnimated) {
+    card.append(createElement("span", { className: "asset-card__badge", text: "Sprite sheet" }));
+  }
+  card.addEventListener("click", () => options.onSelect(entry));
   return card;
 }
 
@@ -49,15 +51,11 @@ function createFolderSection(folder: string, cards: HTMLElement[]): HTMLElement 
   ]);
 }
 
-export function renderGallery(
-  container: HTMLElement,
-  library: Library,
-  onSelect: (entry: LibraryEntry) => void,
-): void {
+export function renderGallery(container: HTMLElement, library: Library, options: GalleryOptions): void {
   const sections = [...groupByFolder(library.entries)].map(([folder, entries]) =>
     createFolderSection(
       folder,
-      entries.map((entry) => createThumbnailCard(entry, onSelect)),
+      entries.map((entry) => createThumbnailCard(entry, options)),
     ),
   );
   if (library.invalidEntries.length > 0) {

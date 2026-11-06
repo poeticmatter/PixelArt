@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildLibrary, getAssetFolder, toAssetId } from "./library.ts";
-import { createTestAsset } from "./testAssets.ts";
+import { createTestImage } from "./testAssets.ts";
 
 describe("toAssetId", () => {
   it("normalizes Windows separators and drops the extension", () => {
@@ -18,8 +18,8 @@ describe("getAssetFolder", () => {
 describe("buildLibrary", () => {
   it("separates valid assets from invalid ones and sorts by id", () => {
     const library = buildLibrary([
-      { relativePath: "b.json", json: createTestAsset() },
-      { relativePath: "a.json", json: createTestAsset() },
+      { relativePath: "b.json", json: createTestImage() },
+      { relativePath: "a.json", json: createTestImage() },
       { relativePath: "broken.json", parseError: "Invalid JSON: Unexpected token" },
       { relativePath: "wrong.json", json: { name: "x" } },
     ]);

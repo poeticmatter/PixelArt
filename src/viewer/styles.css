@@ -148,6 +148,18 @@ input:focus-visible {
   color: var(--color-text-muted);
 }
 
+.asset-card__badge {
+  align-self: flex-start;
+  margin-top: 0.2rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-page);
+  background: var(--color-accent);
+}
+
 .asset-card--invalid {
   border-color: var(--color-error);
   cursor: default;
@@ -242,15 +254,20 @@ input:focus-visible {
   color: var(--color-text-muted);
 }
 
-.detail__nav,
-.export-buttons {
+.button-row {
   display: flex;
   gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
-.detail__nav button,
-.export-buttons button {
+.button-row button {
   flex: 1;
+}
+
+.detail__presenter {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 .detail__section h3 {
@@ -343,4 +360,60 @@ input:focus-visible {
     border-left: none;
     border-top: 1px solid var(--color-border);
   }
+}
+
+/* Sprite sheet animation controls */
+
+.animation-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.animation-list__item {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: baseline;
+  text-align: left;
+}
+
+.animation-list__item.is-selected {
+  border-color: var(--color-accent);
+  box-shadow: inset 3px 0 0 var(--color-accent);
+}
+
+.animation-list__name {
+  font-weight: 600;
+}
+
+.animation-list__meta,
+.frame-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.frame-label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.frame-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.frame-strip__cell {
+  padding: 2px;
+  border-width: 2px;
+}
+
+.frame-strip__cell.is-current {
+  border-color: var(--color-accent);
 }

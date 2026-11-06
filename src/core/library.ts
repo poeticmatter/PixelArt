@@ -1,5 +1,5 @@
 import type { InvalidLibraryEntry, LibraryEntry } from "./types.ts";
-import { validateAsset } from "./validate.ts";
+import { validateAsset } from "./validation/validateAsset.ts";
 
 /** A file found in the library, either parsed or with the reason it could not be parsed. */
 export type LibraryFile =

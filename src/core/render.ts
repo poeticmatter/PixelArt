@@ -1,5 +1,5 @@
 import { parseHexColor } from "./color.ts";
-import type { PixelAsset, Rgba } from "./types.ts";
+import type { PixelImage, Rgba } from "./types.ts";
 
 const BYTES_PER_PIXEL = 4;
 
@@ -16,8 +16,9 @@ export function assertValidScale(scale: number): void {
   }
 }
 
-function resolvePalette(asset: PixelAsset): Rgba[] {
-  return asset.palette.map((entry) => parseHexColor(entry.color));
+/** A fully transparent image, used as the canvas that frames are copied onto. */
+export function createBlankImage(width: number, height: number): RgbaImage {
+  return { width, height, data: new Uint8ClampedArray(width * height * BYTES_PER_PIXEL) };
 }
 
 function writePixelBlock(image: RgbaImage, origin: { x: number; y: number }, scale: number, color: Rgba): void {
@@ -35,23 +36,31 @@ function writePixelBlock(image: RgbaImage, origin: { x: number; y: number }, sca
 
 /**
  * Expands palette indices into RGBA pixels, scaling each source pixel to a
- * scale×scale block (nearest neighbour, so edges stay crisp). Expects a validated asset.
+ * scale×scale block (nearest neighbour, so edges stay crisp). Expects validated data.
  */
-export function renderAsset(asset: PixelAsset, scale = 1): RgbaImage {
+export function renderImage(image: PixelImage, scale = 1): RgbaImage {
   assertValidScale(scale);
-  const colors = resolvePalette(asset);
-  const width = asset.width * scale;
-  const height = asset.height * scale;
-  const image: RgbaImage = { width, height, data: new Uint8ClampedArray(width * height * BYTES_PER_PIXEL) };
+  const colors = image.palette.map((entry) => parseHexColor(entry.color));
+  const output = createBlankImage(image.width * scale, image.height * scale);
 
-  asset.pixels.forEach((row, y) => {
+  image.pixels.forEach((row, y) => {
     row.forEach((colorIndex, x) => {
       const color = colors[colorIndex];
       if (!color) {
         throw new Error(`Pixel (${x}, ${y}) uses color index ${colorIndex}, which is not in the palette.`);
       }
-      writePixelBlock(image, { x: x * scale, y: y * scale }, scale, color);
+      writePixelBlock(output, { x: x * scale, y: y * scale }, scale, color);
     });
   });
-  return image;
+  return output;
+}
+
+/** Copies `source` into `target` with its top-left corner at (x, y). Both must fit. */
+export function copyImageInto(target: RgbaImage, source: RgbaImage, origin: { x: number; y: number }): void {
+  const rowLength = source.width * BYTES_PER_PIXEL;
+  for (let y = 0; y < source.height; y++) {
+    const sourceStart = y * rowLength;
+    const targetStart = ((origin.y + y) * target.width + origin.x) * BYTES_PER_PIXEL;
+    target.data.set(source.data.subarray(sourceStart, sourceStart + rowLength), targetStart);
+  }
 }
