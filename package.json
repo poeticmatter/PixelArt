@@ -1,0 +1,25 @@
+{
+  "name": "pixel-art",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Pixel art assets stored as palette-indexed data, with a browser viewer and PNG export.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc",
+    "test": "vitest run",
+    "validate": "node src/cli/main.ts validate",
+    "export": "node src/cli/main.ts export"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
+  }
+}
