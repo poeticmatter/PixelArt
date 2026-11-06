@@ -7,6 +7,8 @@ chosen per cell by a neighbour bitmask, for top-down, isometric or side-view pla
 all as thumbnails, with sprite sheets animating in place. Any asset can be opened, zoomed and
 exported as a lossless PNG.
 
+**Live viewer:** https://poeticmatter.github.io/PixelArt/ (deployed from `main` by GitHub Actions).
+
 Designed so Claude Code can generate art directly. See [CLAUDE.md](CLAUDE.md) for the asset
 format and authoring workflow.
 
@@ -71,3 +73,6 @@ with idle, walk and jump animations.
 - `meadow-island`: top-down, with water background, sand, grass and forest.
 - `grassy-hills`: side-view platformer, with sky background, grass-topped dirt and stone.
 - `terraced-island`: isometric, with water background and sand, grass and rock terraces.
+- `neon-sprawl`: isometric cyberpunk city. It has roads with lane markings and zebra crossings, a railway
+  with level crossings, buildings with lit windows, neon-rimmed towers, and elevated walkways on
+  pillars. It uses the `city` map generator and per-terrain elevation.
