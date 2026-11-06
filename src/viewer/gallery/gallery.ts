@@ -1,6 +1,6 @@
 import { describeAsset } from "../../core/assetSummary.ts";
 import { getAssetFolder, type Library } from "../../core/library.ts";
-import type { InvalidLibraryEntry, LibraryEntry } from "../../core/types.ts";
+import type { Asset, InvalidLibraryEntry, LibraryEntry } from "../../core/types.ts";
 import type { AnimationClock } from "../animation/animationClock.ts";
 import { createElement } from "../dom.ts";
 import { createThumbnail } from "./thumbnail.ts";
@@ -12,15 +12,22 @@ export interface GalleryOptions {
   onSelect: (entry: LibraryEntry) => void;
 }
 
+/** Plain images need no badge; the other types are worth calling out at a glance. */
+const TYPE_BADGES: Record<Asset["type"], string | undefined> = {
+  image: undefined,
+  spritesheet: "Sprite sheet",
+  tileset: "Tileset",
+};
+
 function createThumbnailCard(entry: LibraryEntry, options: GalleryOptions): HTMLElement {
-  const isAnimated = entry.asset.type === "spritesheet";
+  const badge = TYPE_BADGES[entry.asset.type];
   const card = createElement("button", { className: "asset-card", attributes: { type: "button", title: entry.id } }, [
     createElement("div", { className: "asset-card__preview checkerboard" }, [createThumbnail(entry.asset, options.clock)]),
     createElement("span", { className: "asset-card__name", text: entry.asset.name }),
     createElement("span", { className: "asset-card__meta", text: describeAsset(entry.asset) }),
   ]);
-  if (isAnimated) {
-    card.append(createElement("span", { className: "asset-card__badge", text: "Sprite sheet" }));
+  if (badge) {
+    card.append(createElement("span", { className: "asset-card__badge", text: badge }));
   }
   card.addEventListener("click", () => options.onSelect(entry));
   return card;

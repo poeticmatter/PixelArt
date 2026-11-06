@@ -7,6 +7,7 @@ import { ImagePresenter } from "./imagePresenter.ts";
 import { createPalettePanel } from "./palettePanel.ts";
 import type { AssetPresenter, PresenterHost } from "./presenter.ts";
 import { SpriteSheetPresenter } from "./spriteSheetPresenter.ts";
+import { TilesetPresenter } from "./tilesetPresenter.ts";
 import { clampZoom, getNextZoomIn, getNextZoomOut } from "./zoom.ts";
 
 const BACKGROUNDS = ["checkerboard", "dark", "light"] as const;
@@ -108,10 +109,14 @@ export class DetailView {
 
   private createPresenter(entry: LibraryEntry): AssetPresenter {
     const { asset } = entry;
-    if (asset.type === "image") {
-      return new ImagePresenter(entry.id, asset, this.host);
+    switch (asset.type) {
+      case "image":
+        return new ImagePresenter(entry.id, asset, this.host);
+      case "spritesheet":
+        return new SpriteSheetPresenter({ id: entry.id, sheet: asset, host: this.host, clock: this.clock });
+      case "tileset":
+        return new TilesetPresenter(entry.id, asset, this.host);
     }
-    return new SpriteSheetPresenter({ id: entry.id, sheet: asset, host: this.host, clock: this.clock });
   }
 
   private disposePresenter(): void {

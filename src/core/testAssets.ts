@@ -1,4 +1,30 @@
-import type { Animation, ImageAsset, PaletteColor, SpriteSheetAsset } from "./types.ts";
+import type { Animation, ImageAsset, PaletteColor, SpriteSheetAsset, TilesetAsset } from "./types.ts";
+
+const MASK_COUNT = 16;
+
+/**
+ * A 1×1-tile tileset whose tile for mask m is palette color m + 1 (red channel = m + 1),
+ * so a rendered map pixel reveals which mask was chosen. Index 0 is transparent.
+ */
+export function createTestTileset(overrides: Partial<TilesetAsset> = {}): TilesetAsset {
+  const palette: PaletteColor[] = [
+    { name: "transparent", color: "#00000000" },
+    ...Array.from({ length: MASK_COUNT }, (_, mask) => ({
+      name: `mask ${mask}`,
+      color: `#${(mask + 1).toString(16).padStart(2, "0")}0000`,
+    })),
+  ];
+  return {
+    type: "tileset",
+    name: "Test tileset",
+    projection: { type: "topdown" },
+    tileWidth: 1,
+    tileHeight: 1,
+    palette,
+    terrains: [{ name: "land", tiles: Array.from({ length: MASK_COUNT }, (_, mask) => ({ mask, pixels: [[mask + 1]] })) }],
+    ...overrides,
+  };
+}
 
 const TEST_PALETTE: PaletteColor[] = [
   { name: "transparent", color: "#00000000" },

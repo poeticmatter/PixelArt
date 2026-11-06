@@ -1,6 +1,8 @@
 import { renderImage } from "../../core/render.ts";
 import { getFrameImage } from "../../core/spriteSheet.ts";
-import type { Asset, ImageAsset, SpriteSheetAsset } from "../../core/types.ts";
+import { generateTileMap } from "../../core/tileset/mapGenerator.ts";
+import { renderTileMap } from "../../core/tileset/renderTileMap.ts";
+import type { Asset, ImageAsset, SpriteSheetAsset, TilesetAsset } from "../../core/types.ts";
 import type { AnimationClock } from "../animation/animationClock.ts";
 import { createPreviewPlayback } from "../animation/animationPreview.ts";
 import { drawRgbaImage, getFittingScale } from "../canvas.ts";
@@ -41,6 +43,30 @@ function createSpriteSheetThumbnail(sheet: SpriteSheetAsset, clock: AnimationClo
   return canvas;
 }
 
+/** Thumbnail maps are small but still show each projection's character; CSS scales them to fit. */
+const THUMBNAIL_MAP_SIZES = {
+  topdown: { width: 12, height: 12 },
+  sideview: { width: 16, height: 9 },
+  isometric: { width: 9, height: 9 },
+} as const;
+/** A fixed seed keeps the gallery stable between reloads. */
+const THUMBNAIL_MAP_SEED = 7;
+
+function createTilesetThumbnail(tileset: TilesetAsset): HTMLCanvasElement {
+  const canvas = createElement("canvas", { className: "pixel-canvas pixel-canvas--fit" });
+  const size = THUMBNAIL_MAP_SIZES[tileset.projection.type];
+  const map = generateTileMap(tileset.projection, tileset.terrains.length, { ...size, seed: THUMBNAIL_MAP_SEED });
+  drawRgbaImage(canvas, renderTileMap(tileset, map));
+  return canvas;
+}
+
 export function createThumbnail(asset: Asset, clock: AnimationClock): HTMLCanvasElement {
-  return asset.type === "image" ? createImageThumbnail(asset) : createSpriteSheetThumbnail(asset, clock);
+  switch (asset.type) {
+    case "image":
+      return createImageThumbnail(asset);
+    case "spritesheet":
+      return createSpriteSheetThumbnail(asset, clock);
+    case "tileset":
+      return createTilesetThumbnail(asset);
+  }
 }

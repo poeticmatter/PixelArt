@@ -55,6 +55,42 @@ export function renderImage(image: PixelImage, scale = 1): RgbaImage {
   return output;
 }
 
+const MAX_CHANNEL = 255;
+
+function blendPixelOver(target: RgbaImage, targetOffset: number, source: RgbaImage, sourceOffset: number): void {
+  const sourceAlpha = (source.data[sourceOffset + 3] ?? 0) / MAX_CHANNEL;
+  if (sourceAlpha === 0) {
+    return;
+  }
+  const targetAlpha = (target.data[targetOffset + 3] ?? 0) / MAX_CHANNEL;
+  const outputAlpha = sourceAlpha + targetAlpha * (1 - sourceAlpha);
+  for (let channel = 0; channel < 3; channel++) {
+    const sourceValue = source.data[sourceOffset + channel] ?? 0;
+    const targetValue = target.data[targetOffset + channel] ?? 0;
+    target.data[targetOffset + channel] =
+      (sourceValue * sourceAlpha + targetValue * targetAlpha * (1 - sourceAlpha)) / outputAlpha;
+  }
+  target.data[targetOffset + 3] = outputAlpha * MAX_CHANNEL;
+}
+
+/**
+ * Draws `source` over `target` with alpha blending ("source over"), clipping to the
+ * target's bounds. Used to layer transparent-edged tiles.
+ */
+export function drawImageOver(target: RgbaImage, source: RgbaImage, origin: { x: number; y: number }): void {
+  const startX = Math.max(0, -origin.x);
+  const startY = Math.max(0, -origin.y);
+  const endX = Math.min(source.width, target.width - origin.x);
+  const endY = Math.min(source.height, target.height - origin.y);
+  for (let y = startY; y < endY; y++) {
+    for (let x = startX; x < endX; x++) {
+      const sourceOffset = (y * source.width + x) * BYTES_PER_PIXEL;
+      const targetOffset = ((origin.y + y) * target.width + origin.x + x) * BYTES_PER_PIXEL;
+      blendPixelOver(target, targetOffset, source, sourceOffset);
+    }
+  }
+}
+
 /** Copies `source` into `target` with its top-left corner at (x, y). Both must fit. */
 export function copyImageInto(target: RgbaImage, source: RgbaImage, origin: { x: number; y: number }): void {
   const rowLength = source.width * BYTES_PER_PIXEL;

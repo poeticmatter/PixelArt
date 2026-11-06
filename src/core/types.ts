@@ -51,7 +51,49 @@ export interface SpriteSheetAsset {
   animations: Animation[];
 }
 
-export type Asset = ImageAsset | SpriteSheetAsset;
+/**
+ * How tiles are laid out on screen. The bitmask logic is the same for all three;
+ * the projection changes tile shape, draw order and the kind of map generated.
+ */
+export type Projection =
+  | { type: "topdown" }
+  | { type: "sideview" }
+  /**
+   * Tiles are tileWidth-wide diamonds footprintHeight tall, drawn back to front.
+   * Pixels below the diamond (tileHeight - footprintHeight) are the tile's side faces,
+   * and each terrain layer is raised by that much, giving terraces.
+   */
+  | { type: "isometric"; footprintHeight: number };
+
+export interface Tile {
+  /** Which neighbours share this terrain: N=1, E=2, S=4, W=8 (see core/tileset/bitmask.ts). */
+  mask: number;
+  pixels: PixelMatrix;
+}
+
+export interface Terrain {
+  name: string;
+  /** At least one tile for every mask 0-15. Extra tiles with the same mask are random variants. */
+  tiles: Tile[];
+}
+
+/**
+ * Autotiling terrains for a tile map. Terrains are layers in order: each one is drawn over
+ * the previous, so tiles use transparency where their terrain ends.
+ */
+export interface TilesetAsset {
+  type: "tileset";
+  name: string;
+  projection: Projection;
+  tileWidth: number;
+  tileHeight: number;
+  palette: PaletteColor[];
+  /** Drawn under every cell before any terrain, e.g. water or sky. */
+  background?: { pixels: PixelMatrix };
+  terrains: Terrain[];
+}
+
+export type Asset = ImageAsset | SpriteSheetAsset | TilesetAsset;
 
 export interface Rgba {
   red: number;

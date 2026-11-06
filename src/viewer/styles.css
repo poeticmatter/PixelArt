@@ -417,3 +417,34 @@ input:focus-visible {
 .frame-strip__cell.is-current {
   border-color: var(--color-accent);
 }
+
+/* Tilesets */
+
+.pixel-canvas--fit {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.number-input {
+  width: 7rem;
+  font: inherit;
+  color: inherit;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+}
+
+.terrain-list {
+  margin: 0 0 0.5rem;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.detail__note {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}

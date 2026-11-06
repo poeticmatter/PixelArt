@@ -14,7 +14,8 @@
     "typecheck": "tsc",
     "test": "vitest run",
     "validate": "node src/cli/main.ts validate",
-    "export": "node src/cli/main.ts export"
+    "export": "node src/cli/main.ts export",
+    "map": "node src/cli/main.ts map"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

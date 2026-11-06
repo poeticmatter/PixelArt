@@ -1,0 +1,111 @@
+import { ALL_MASKS, describeMask } from "../tileset/bitmask.ts";
+import {
+  type Fields,
+  isFields,
+  isIntegerInRange,
+  isNonEmptyString,
+  type MatrixShape,
+  validateDimension,
+  validateName,
+  validatePalette,
+  validatePixelMatrix,
+} from "./primitives.ts";
+
+const PROJECTION_TYPES = ["topdown", "sideview", "isometric"];
+
+function validateProjection(projection: unknown, tileWidth: unknown, tileHeight: unknown): string[] {
+  if (!isFields(projection) || !PROJECTION_TYPES.includes(String(projection.type))) {
+    return [`"projection.type" must be one of "${PROJECTION_TYPES.join(`", "`)}".`];
+  }
+  if (projection.type !== "isometric") {
+    return [];
+  }
+  const errors: string[] = [];
+  if (typeof tileWidth === "number" && tileWidth % 2 !== 0) {
+    errors.push(`Isometric tiles need an even "tileWidth" so the diamond is symmetric.`);
+  }
+  const maxFootprint = typeof tileHeight === "number" ? tileHeight : 1;
+  if (!isIntegerInRange(projection.footprintHeight, 1, maxFootprint)) {
+    errors.push(`"projection.footprintHeight" must be an integer from 1 to tileHeight (${maxFootprint}).`);
+  }
+  return errors;
+}
+
+function validateTile(tile: unknown, path: string, shape: MatrixShape): string[] {
+  if (!isFields(tile)) {
+    return [`${path} must be an object with "mask" and "pixels".`];
+  }
+  const errors = validatePixelMatrix(tile.pixels, `${path}.pixels`, shape);
+  if (!isIntegerInRange(tile.mask, 0, ALL_MASKS.length - 1)) {
+    errors.push(`${path}.mask must be an integer from 0 to ${ALL_MASKS.length - 1}.`);
+  }
+  return errors;
+}
+
+function findMissingMasks(tiles: unknown[]): number[] {
+  const presentMasks = new Set(tiles.map((tile) => (isFields(tile) ? tile.mask : undefined)));
+  return ALL_MASKS.filter((mask) => !presentMasks.has(mask));
+}
+
+function validateTerrain(terrain: unknown, index: number, shape: MatrixShape): string[] {
+  const path = `terrains[${index}]`;
+  if (!isFields(terrain)) {
+    return [`${path} must be an object.`];
+  }
+  const errors = isNonEmptyString(terrain.name) ? [] : [`${path}.name must be a non-empty string.`];
+  if (!Array.isArray(terrain.tiles)) {
+    return [...errors, `${path}.tiles must be an array.`];
+  }
+  terrain.tiles.forEach((tile: unknown, tileIndex) => errors.push(...validateTile(tile, `${path}.tiles[${tileIndex}]`, shape)));
+  const missingMasks = findMissingMasks(terrain.tiles);
+  if (missingMasks.length > 0) {
+    const missing = missingMasks.map((mask) => `${mask} (${describeMask(mask)})`).join(", ");
+    errors.push(`${path} has no tile for mask ${missing}.`);
+  }
+  return errors;
+}
+
+function validateBackground(background: unknown, shape: MatrixShape): string[] {
+  if (background === undefined) {
+    return [];
+  }
+  if (!isFields(background)) {
+    return [`"background" must be an object with "pixels" when present.`];
+  }
+  return validatePixelMatrix(background.pixels, `background.pixels`, shape);
+}
+
+function findDuplicateTerrainNames(terrains: unknown[]): string[] {
+  const names = terrains.map((terrain) => (isFields(terrain) ? terrain.name : undefined));
+  const duplicates = names.filter((name, index) => isNonEmptyString(name) && names.indexOf(name) !== index);
+  return [...new Set(duplicates)].map((name) => `Terrain name "${String(name)}" is used more than once.`);
+}
+
+/** Validates the fields of a `"type": "tileset"` asset. */
+export function validateTilesetFields(fields: Fields): string[] {
+  const headerErrors = [
+    ...validateName(fields, ""),
+    ...validateDimension(fields.tileWidth, "tileWidth"),
+    ...validateDimension(fields.tileHeight, "tileHeight"),
+    ...validateProjection(fields.projection, fields.tileWidth, fields.tileHeight),
+    ...validatePalette(fields.palette),
+  ];
+  if (!Array.isArray(fields.terrains) || fields.terrains.length === 0) {
+    headerErrors.push(`"terrains" must be a non-empty array.`);
+  }
+  // Tiles can only be checked once the tile size, palette and terrain list are trustworthy.
+  if (headerErrors.length > 0) {
+    return headerErrors;
+  }
+  const terrains = fields.terrains as unknown[];
+  const shape: MatrixShape = {
+    width: fields.tileWidth as number,
+    height: fields.tileHeight as number,
+    paletteSize: (fields.palette as unknown[]).length,
+  };
+  return [
+    ...validateBackground(fields.background, shape),
+    ...findDuplicateTerrainNames(terrains),
+    ...terrains.flatMap((terrain, index) => validateTerrain(terrain, index, shape)),
+  ];
+}

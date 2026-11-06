@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createTestImage, createTestSpriteSheet } from "../testAssets.ts";
+import { createTestImage, createTestSpriteSheet, createTestTileset } from "../testAssets.ts";
 import { validateAsset } from "./validateAsset.ts";
 
 function getErrors(input: unknown): string[] {
@@ -99,5 +99,40 @@ describe("validateAsset for sprite sheets", () => {
       animations: [{ name: "idle", frameDurationMs: 100, loop: true, frames: [{ pixels: [[1]], durationMs: 0 }] }],
     });
     expect(getErrors(sheet)).toEqual(["animations[0].frames[0].durationMs must be a positive integer when present."]);
+  });
+});
+
+describe("validateAsset for tilesets", () => {
+  it("accepts a well-formed tileset", () => {
+    expect(validateAsset(createTestTileset()).isValid).toBe(true);
+  });
+
+  it("names every mask a terrain is missing a tile for", () => {
+    const tileset = createTestTileset();
+    const [terrain] = tileset.terrains;
+    const tiles = (terrain?.tiles ?? []).filter((tile) => tile.mask !== 3 && tile.mask !== 12);
+    expect(getErrors({ ...tileset, terrains: [{ name: "land", tiles }] })).toEqual([
+      "terrains[0] has no tile for mask 3 (N+E), 12 (S+W).",
+    ]);
+  });
+
+  it("rejects an isometric footprint taller than the tile", () => {
+    const tileset = createTestTileset({ tileWidth: 2, projection: { type: "isometric", footprintHeight: 2 } });
+    expect(getErrors(tileset)[0]).toMatch(/footprintHeight/);
+  });
+
+  it("rejects an odd isometric tile width", () => {
+    const tileset = createTestTileset({ projection: { type: "isometric", footprintHeight: 1 } });
+    expect(getErrors(tileset)[0]).toMatch(/even "tileWidth"/);
+  });
+
+  it("rejects an unknown projection", () => {
+    expect(getErrors({ ...createTestTileset(), projection: { type: "hexagonal" } })[0]).toMatch(/projection\.type/);
+  });
+
+  it("checks the background tile's size", () => {
+    expect(getErrors(createTestTileset({ background: { pixels: [[1, 1]] } }))).toEqual([
+      "background.pixels[0] has 2 pixels, expected width 1.",
+    ]);
   });
 });

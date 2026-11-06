@@ -2,6 +2,7 @@ import type { Asset, ValidationResult } from "../types.ts";
 import { type Fields, isFields } from "./primitives.ts";
 import { validateImageFields } from "./validateImage.ts";
 import { validateSpriteSheetFields } from "./validateSpriteSheet.ts";
+import { validateTilesetFields } from "./validateTileset.ts";
 
 /** Keeps error reports readable when a whole matrix is wrong. */
 const MAX_REPORTED_ERRORS = 20;
@@ -9,6 +10,7 @@ const MAX_REPORTED_ERRORS = 20;
 const VALIDATORS_BY_TYPE: Record<Asset["type"], (fields: Fields) => string[]> = {
   image: validateImageFields,
   spritesheet: validateSpriteSheetFields,
+  tileset: validateTilesetFields,
 };
 
 function isAssetType(value: unknown): value is Asset["type"] {
