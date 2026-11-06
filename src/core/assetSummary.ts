@@ -24,6 +24,7 @@ export function describeAsset(asset: Asset): string {
       return [
         `${asset.projection.type} ${asset.tileWidth}×${asset.tileHeight} tiles`,
         pluralize(asset.terrains.length, "terrain"),
+        ...(asset.props?.length ? [pluralize(asset.props.length, "prop")] : []),
         colors,
       ].join(" · ");
   }
@@ -37,8 +38,12 @@ export function getAllPixelMatrices(asset: Asset): PixelMatrix[] {
     case "spritesheet":
       return asset.animations.flatMap((animation) => animation.frames.map((frame) => frame.pixels));
     case "tileset": {
-      const tiles = asset.terrains.flatMap((terrain) => terrain.tiles.map((tile) => tile.pixels));
-      return asset.background ? [asset.background.pixels, ...tiles] : tiles;
+      const tiles = asset.terrains.flatMap((terrain) => [
+        ...terrain.tiles.map((tile) => tile.pixels),
+        ...(terrain.walls ?? []).map((strip) => strip.pixels),
+      ]);
+      const props = (asset.props ?? []).flatMap((prop) => prop.variants.map((variant) => variant.pixels));
+      return [...(asset.background ? [asset.background.pixels] : []), ...tiles, ...props];
     }
   }
 }

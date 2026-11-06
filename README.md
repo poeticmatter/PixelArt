@@ -76,6 +76,10 @@ with idle, walk and jump animations.
 - `neon-sprawl`: isometric cyberpunk city. It has roads with lane markings and zebra crossings, a railway
   with level crossings, buildings with lit windows, neon-rimmed towers, and elevated walkways on
   pillars. It uses the `city` map generator and per-terrain elevation.
+- `neon-district`: a dense 64px isometric city that uses the full engine: per-storey façade
+  variants repeated to per-building heights, glass towers on podium buildings, a rail viaduct
+  with trains on pillars, walkways, and props (cars, pedestrians, street lamps, roof equipment,
+  wall signs). Its art direction follows the "dense isometric city" section of CLAUDE.md.
 - `neon-sprawl-hd`: the same city at much higher fidelity, with 64×64 tiles and a 63-colour palette. Details include:
   - beveled paving slabs, curbs with visible faces, and roads with manholes and neon-reflecting puddles
   - ballast, wooden sleepers and highlighted rails

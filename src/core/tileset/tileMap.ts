@@ -3,6 +3,11 @@ export interface TileMap {
   width: number;
   height: number;
   layers: boolean[][][];
+  /**
+   * Optional per-cell heights in storeys, per layer: elevations[terrain][y][x]. A missing
+   * layer (or cell) uses the terrain's own elevation. Lets generators vary building heights.
+   */
+  elevations?: (number[][] | undefined)[];
 }
 
 export interface MapOptions {

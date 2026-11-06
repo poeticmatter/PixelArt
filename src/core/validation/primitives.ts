@@ -2,6 +2,8 @@ import { isHexColor } from "../color.ts";
 
 export const MAX_PALETTE_SIZE = 256;
 export const MAX_DIMENSION = 1024;
+/** Generous ceiling in storeys: taller stacks would not fit a sensible isometric map. */
+export const MAX_ELEVATION = 16;
 
 export type Fields = Record<string, unknown>;
 
@@ -19,6 +21,30 @@ export function isNonEmptyString(value: unknown): value is string {
 
 export function isPositiveInteger(value: unknown): value is number {
   return isIntegerInRange(value, 1, Number.MAX_SAFE_INTEGER);
+}
+
+export function isPositiveNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0;
+}
+
+export function isProbability(value: unknown): value is number {
+  return typeof value === "number" && value >= 0 && value <= 1;
+}
+
+/** An optional variant weight: absent, or a positive number. */
+export function validateWeight(weight: unknown, path: string): string[] {
+  return weight === undefined || isPositiveNumber(weight) ? [] : [`${path}.weight must be a positive number when present.`];
+}
+
+/** A [min, max] pair of integers with min <= max, both within [lowest, highest]. */
+export function isIntegerRangePair(value: unknown, lowest: number, highest: number): value is [number, number] {
+  return (
+    Array.isArray(value) &&
+    value.length === 2 &&
+    isIntegerInRange(value[0], lowest, highest) &&
+    isIntegerInRange(value[1], lowest, highest) &&
+    value[0] <= value[1]
+  );
 }
 
 export function validateName(fields: Fields, path: string): string[] {

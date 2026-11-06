@@ -1,20 +1,22 @@
 import { ALL_MASKS, describeMask } from "../tileset/bitmask.ts";
-import { validateMapGenerator } from "./validateMapGenerator.ts";
 import {
   type Fields,
   isFields,
   isIntegerInRange,
   isNonEmptyString,
   type MatrixShape,
+  MAX_ELEVATION,
   validateDimension,
   validateName,
   validatePalette,
   validatePixelMatrix,
+  validateWeight,
 } from "./primitives.ts";
+import { validateMapGenerator } from "./validateMapGenerator.ts";
+import { validateProps } from "./validateProps.ts";
+import { validateWalls, type WallContext } from "./validateWalls.ts";
 
 const PROJECTION_TYPES = ["topdown", "sideview", "isometric"];
-/** Generous ceiling: taller stacks than this would not fit a sensible isometric map. */
-export const MAX_ELEVATION = 16;
 
 function validateProjection(projection: unknown, tileWidth: unknown, tileHeight: unknown): string[] {
   if (!isFields(projection) || !PROJECTION_TYPES.includes(String(projection.type))) {
@@ -42,10 +44,22 @@ function validateTile(tile: unknown, path: string, shape: MatrixShape): string[]
   if (!isIntegerInRange(tile.mask, 0, ALL_MASKS.length - 1)) {
     errors.push(`${path}.mask must be an integer from 0 to ${ALL_MASKS.length - 1}.`);
   }
-  if (tile.weight !== undefined && !(typeof tile.weight === "number" && Number.isFinite(tile.weight) && tile.weight > 0)) {
-    errors.push(`${path}.weight must be a positive number when present.`);
+  return [...errors, ...validateWeight(tile.weight, path)];
+}
+
+interface TerrainContext {
+  shape: MatrixShape;
+  walls: WallContext;
+}
+
+/** Wall strips are half a tile wide and one step plus the face's slope tall. */
+function getWallContext(projection: unknown, shape: MatrixShape): WallContext {
+  if (!isFields(projection) || projection.type !== "isometric" || typeof projection.footprintHeight !== "number") {
+    return { isIsometric: false, stripShape: undefined };
   }
-  return errors;
+  const step = shape.height - projection.footprintHeight;
+  const stripShape = step > 0 ? { width: shape.width / 2, height: step + projection.footprintHeight / 2, paletteSize: shape.paletteSize } : undefined;
+  return { isIsometric: true, stripShape };
 }
 
 function findMissingMasks(tiles: unknown[]): number[] {
@@ -53,7 +67,7 @@ function findMissingMasks(tiles: unknown[]): number[] {
   return ALL_MASKS.filter((mask) => !presentMasks.has(mask));
 }
 
-function validateTerrain(terrain: unknown, index: number, shape: MatrixShape): string[] {
+function validateTerrain(terrain: unknown, index: number, { shape, walls }: TerrainContext): string[] {
   const path = `terrains[${index}]`;
   if (!isFields(terrain)) {
     return [`${path} must be an object.`];
@@ -71,7 +85,7 @@ function validateTerrain(terrain: unknown, index: number, shape: MatrixShape): s
     const missing = missingMasks.map((mask) => `${mask} (${describeMask(mask)})`).join(", ");
     errors.push(`${path} has no tile for mask ${missing}.`);
   }
-  return errors;
+  return [...errors, ...validateWalls(terrain, path, walls)];
 }
 
 function validateBackground(background: unknown, shape: MatrixShape): string[] {
@@ -112,10 +126,13 @@ export function validateTilesetFields(fields: Fields): string[] {
     height: fields.tileHeight as number,
     paletteSize: (fields.palette as unknown[]).length,
   };
+  const wallContext = getWallContext(fields.projection, shape);
+  const terrainNames = terrains.map((terrain) => (isFields(terrain) ? terrain.name : undefined));
   return [
     ...validateBackground(fields.background, shape),
     ...findDuplicateTerrainNames(terrains),
     ...validateMapGenerator(fields.generator, terrains),
-    ...terrains.flatMap((terrain, index) => validateTerrain(terrain, index, shape)),
+    ...terrains.flatMap((terrain, index) => validateTerrain(terrain, index, { shape, walls: wallContext })),
+    ...validateProps(fields.props, { terrainNames, isIsometric: wallContext.isIsometric, paletteSize: shape.paletteSize }),
   ];
 }

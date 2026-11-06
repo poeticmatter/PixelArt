@@ -83,10 +83,14 @@ describe("hill maps", () => {
 
 describe("city maps", () => {
   const LAYER_INDEX = { road: 0, rail: 1, building: 2, tower: 3, walkway: 4, unused: 5 } as const;
-  const city = createTilesetShape({ type: "isometric", footprintHeight: 16 }, ["asphalt", "tracks", "blocks", "spires", "bridges", "unused"], {
-    type: "city",
-    roles: { road: "asphalt", rail: "tracks", building: "blocks", tower: "spires", walkway: "bridges" },
-  });
+  const elevations: Record<string, number> = { asphalt: 0, tracks: 0, blocks: 2, spires: 3, bridges: 2, unused: 0 };
+  const city: GeneratorInput = {
+    ...createTilesetShape({ type: "isometric", footprintHeight: 16 }, Object.keys(elevations), {
+      type: "city",
+      roles: { road: "asphalt", rail: "tracks", building: "blocks", tower: "spires", walkway: "bridges" },
+    }),
+  };
+  city.terrains = city.terrains.map((terrain) => ({ ...terrain, elevation: elevations[terrain.name] }));
   const maps = [1, 2, 3, 4, 5].map((seed) => generateTileMap(city, { width: 32, height: 32, seed }));
   const layerOf = (map: TileMap, feature: keyof typeof LAYER_INDEX): Grid | undefined => map.layers[LAYER_INDEX[feature]];
   const overlaps = (first: Grid | undefined, second: Grid | undefined): boolean =>

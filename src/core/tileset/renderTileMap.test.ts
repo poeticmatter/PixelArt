@@ -57,8 +57,9 @@ describe("renderTileMap in isometric projection", () => {
         { name: "high", tiles: [] },
       ],
     });
-    const emptyMap: TileMap = { width: 3, height: 2, layers: [[], []] };
-    const image = renderTileMap(tileset, emptyMap);
+    // One raised cell: the image leaves room for the tallest thing actually on the map.
+    const map: TileMap = { width: 3, height: 2, layers: [[], [[true]]] };
+    const image = renderTileMap(tileset, map);
     // Width: (3 + 2) diamonds of half-width 8. Height: one 4px rise, 3 half-height steps, one tile.
     expect({ width: image.width, height: image.height }).toEqual({ width: 40, height: 4 + 3 * 4 + 12 });
   });
@@ -75,7 +76,7 @@ describe("renderTileMap with explicit elevations", () => {
         { name: "tower", elevation: 3, tiles: [] },
       ],
     });
-    const image = renderTileMap(tileset, { width: 1, height: 1, layers: [[], []] });
+    const image = renderTileMap(tileset, { width: 1, height: 1, layers: [[], [[true]]] });
     // Three 4px steps of headroom above a single 12px tile.
     expect(image.height).toBe(3 * 4 + 12);
   });

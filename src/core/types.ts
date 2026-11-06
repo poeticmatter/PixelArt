@@ -73,20 +73,92 @@ export interface Tile {
   weight?: number;
 }
 
+export type WallFace = "left" | "right";
+/** "ground" is the storey at street level; "upper" is every storey above it. */
+export type WallFloor = "ground" | "upper";
+
+/**
+ * Isometric only: one storey of side face, repeated downward below a terrain's cap tile to
+ * the top of the layer beneath, so a terrain can stand any number of storeys tall.
+ * Size: tileWidth / 2 wide, step + footprintHeight / 2 tall (the shape of half a cap's side face).
+ */
+export interface WallStrip {
+  face: WallFace;
+  floor: WallFloor;
+  /** Relative pick frequency among strips with the same face and floor. Defaults to 1. */
+  weight?: number;
+  pixels: PixelMatrix;
+}
+
 export interface Terrain {
   name: string;
   /** At least one tile for every mask 0-15. Extra tiles with the same mask are random variants. */
   tiles: Tile[];
   /**
-   * Isometric only: how many steps of (tileHeight - footprintHeight) pixels the terrain is
-   * raised. Defaults to the terrain's index, so successive layers form terraces.
+   * Isometric only: height of the terrain's top surface in steps of
+   * (tileHeight - footprintHeight) pixels. Defaults to the terrain's index, making terraces.
    */
   elevation?: number;
+  walls?: WallStrip[];
+}
+
+export type PropPlacement = "top" | "left" | "right";
+
+export interface PropVariant {
+  weight?: number;
+  pixels: PixelMatrix;
+}
+
+/** A free-size sprite scattered over cells of one terrain: the clutter that makes a map look inhabited. */
+export interface Prop {
+  name: string;
+  /** Terrain name; the prop only appears where this terrain is the cell's top layer. */
+  on: string;
+  /** On the top surface, or on a drawn side face (isometric only). */
+  place: PropPlacement;
+  /** Wall props only: [min, max] storey, counted from 0 at the bottom of the wall. */
+  floors?: [number, number];
+  /** Only on cells whose neighbour mask (for `on`) is one of these. */
+  masks?: number[];
+  /** Probability per eligible cell, or per eligible storey for wall props. */
+  chance: number;
+  /** Pixel of the sprite that lands on the placement point: top centre or face centre. */
+  anchor: [number, number];
+  /** All variants share one size, so the anchor fits every one. */
+  variants: PropVariant[];
 }
 
 /** Map features the city generator knows how to lay out. */
-export const CITY_ROLES = ["road", "rail", "building", "tower", "walkway"] as const;
+export const CITY_ROLES = ["road", "rail", "sidewalk", "building", "tower", "walkway"] as const;
 export type CityRole = (typeof CITY_ROLES)[number];
+
+/** An inclusive [min, max] range of whole numbers. */
+export type IntegerRange = [number, number];
+
+/** Options for the "city" generator; every one has a default (see core/tileset/cityGenerator.ts). */
+export interface CityGeneratorConfig {
+  type: "city";
+  roles: Partial<Record<CityRole, string>>;
+  /** Building lot size in cells, between the sidewalks, picked per block. */
+  blockSize?: IntegerRange;
+  /** Road lanes, in cells. */
+  roadWidth?: number;
+  /** Extra sidewalk cells between the kerbside sidewalk strip and the buildings. */
+  setback?: number;
+  /** Share of lots left as open plazas. */
+  openSpace?: number;
+  /** Building height in storeys, picked per building. Defaults to the terrain's elevation. */
+  buildingHeight?: IntegerRange;
+  /** Storeys a tower rises above the building it stands on, picked per tower. */
+  towerHeight?: IntegerRange;
+  towerChance?: number;
+  /** Viaduct height of the railway, in storeys; 0 runs it at street level as one of the streets. */
+  railElevation?: number;
+  /** Height of the walkways that bridge streets between buildings. */
+  walkwayElevation?: number;
+  /** Chance of a walkway at each place one could bridge a street between two buildings. */
+  walkwayChance?: number;
+}
 
 /**
  * Which random map a tileset generates. Without one, top-down and isometric tilesets make
@@ -102,7 +174,7 @@ export type MapGeneratorConfig =
    * and walkways bridging streets between buildings. `roles` maps each feature to the name
    * of the terrain that draws it; unmapped features are left out.
    */
-  | { type: "city"; roles: Partial<Record<CityRole, string>> };
+  | CityGeneratorConfig;
 
 /**
  * Autotiling terrains for a tile map. Terrains are layers in order: each one is drawn over
@@ -118,6 +190,7 @@ export interface TilesetAsset {
   /** Drawn under every cell before any terrain, e.g. water or sky. */
   background?: { pixels: PixelMatrix };
   terrains: Terrain[];
+  props?: Prop[];
   generator?: MapGeneratorConfig;
 }
 
