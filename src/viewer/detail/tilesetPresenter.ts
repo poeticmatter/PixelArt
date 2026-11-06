@@ -1,13 +1,8 @@
 import { getBaseName, getExportStem } from "../../core/exportNaming.ts";
 import type { RgbaImage } from "../../core/render.ts";
 import { describeMask, NEIGHBOR_BITS } from "../../core/tileset/bitmask.ts";
-import {
-  generateTileMap,
-  getDefaultMapSize,
-  MAX_MAP_SIZE,
-  MIN_MAP_SIZE,
-  type TileMap,
-} from "../../core/tileset/mapGenerator.ts";
+import { generateTileMap, getDefaultMapSize } from "../../core/tileset/mapGenerator.ts";
+import { MAX_MAP_SIZE, MIN_MAP_SIZE, type TileMap } from "../../core/tileset/tileMap.ts";
 import { renderTileMap } from "../../core/tileset/renderTileMap.ts";
 import { createTilesetMetadata, renderTilesetAtlas } from "../../core/tileset/tilesetAtlas.ts";
 import type { TilesetAsset } from "../../core/types.ts";
@@ -134,7 +129,7 @@ export class TilesetPresenter implements AssetPresenter {
   }
 
   private generateMap(): TileMap {
-    return generateTileMap(this.tileset.projection, this.tileset.terrains.length, { ...this.mapSize, seed: this.seed });
+    return generateTileMap(this.tileset, { ...this.mapSize, seed: this.seed });
   }
 
   private regenerate(seed: number): void {

@@ -40,7 +40,7 @@ export function runMap(commandArgs: string[]): number {
   if (!Number.isSafeInteger(seed)) {
     throw new Error(`--seed must be an integer, got "${values.seed}".`);
   }
-  const map = generateTileMap(tileset.projection, tileset.terrains.length, {
+  const map = generateTileMap(tileset, {
     seed,
     width: values.width ? parsePositiveInteger(values.width, "width") : defaultSize.width,
     height: values.height ? parsePositiveInteger(values.height, "height") : defaultSize.height,

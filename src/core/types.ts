@@ -60,8 +60,8 @@ export type Projection =
   | { type: "sideview" }
   /**
    * Tiles are tileWidth-wide diamonds footprintHeight tall, drawn back to front.
-   * Pixels below the diamond (tileHeight - footprintHeight) are the tile's side faces,
-   * and each terrain layer is raised by that much, giving terraces.
+   * Pixels below the diamond (tileHeight - footprintHeight) are the tile's side faces;
+   * one elevation step raises a terrain by that much (see Terrain.elevation).
    */
   | { type: "isometric"; footprintHeight: number };
 
@@ -75,7 +75,32 @@ export interface Terrain {
   name: string;
   /** At least one tile for every mask 0-15. Extra tiles with the same mask are random variants. */
   tiles: Tile[];
+  /**
+   * Isometric only: how many steps of (tileHeight - footprintHeight) pixels the terrain is
+   * raised. Defaults to the terrain's index, so successive layers form terraces.
+   */
+  elevation?: number;
 }
+
+/** Map features the city generator knows how to lay out. */
+export const CITY_ROLES = ["road", "rail", "building", "tower", "walkway"] as const;
+export type CityRole = (typeof CITY_ROLES)[number];
+
+/**
+ * Which random map a tileset generates. Without one, top-down and isometric tilesets make
+ * islands and side-view tilesets make hills.
+ */
+export type MapGeneratorConfig =
+  /** Terrains nest like contour lines: each one inside the one before. */
+  | { type: "island" }
+  /** Platformer ground with floating platforms; later terrains are buried deeper. */
+  | { type: "hills" }
+  /**
+   * A street grid with rail lines, buildings in the blocks, taller towers on some of them,
+   * and walkways bridging streets between buildings. `roles` maps each feature to the name
+   * of the terrain that draws it; unmapped features are left out.
+   */
+  | { type: "city"; roles: Partial<Record<CityRole, string>> };
 
 /**
  * Autotiling terrains for a tile map. Terrains are layers in order: each one is drawn over
@@ -91,6 +116,7 @@ export interface TilesetAsset {
   /** Drawn under every cell before any terrain, e.g. water or sky. */
   background?: { pixels: PixelMatrix };
   terrains: Terrain[];
+  generator?: MapGeneratorConfig;
 }
 
 export type Asset = ImageAsset | SpriteSheetAsset | TilesetAsset;

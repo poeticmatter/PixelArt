@@ -136,3 +136,37 @@ describe("validateAsset for tilesets", () => {
     ]);
   });
 });
+
+describe("validateAsset for tileset generators and elevation", () => {
+  const twoTerrains = (): ReturnType<typeof createTestTileset> => {
+    const tileset = createTestTileset();
+    const [land] = tileset.terrains;
+    return { ...tileset, terrains: [{ ...land, name: "road", tiles: land?.tiles ?? [] }, { ...land, name: "block", tiles: land?.tiles ?? [] }] };
+  };
+
+  it("accepts a city generator whose roles name existing terrains", () => {
+    const tileset = { ...twoTerrains(), generator: { type: "city", roles: { road: "road", building: "block" } } };
+    expect(validateAsset(tileset).isValid).toBe(true);
+  });
+
+  it("rejects a role that names a missing terrain", () => {
+    const tileset = { ...twoTerrains(), generator: { type: "city", roles: { road: "highway" } } };
+    expect(getErrors(tileset)).toEqual([`"generator.roles.road" must name one of the tileset's terrains, got "highway".`]);
+  });
+
+  it("rejects an unknown city feature", () => {
+    const tileset = { ...twoTerrains(), generator: { type: "city", roles: { canal: "road" } } };
+    expect(getErrors(tileset)[0]).toMatch(/"generator.roles.canal" is not a city feature/);
+  });
+
+  it("rejects an unknown generator type", () => {
+    expect(getErrors({ ...createTestTileset(), generator: { type: "maze" } })[0]).toMatch(/"generator.type"/);
+  });
+
+  it("rejects a negative terrain elevation", () => {
+    const tileset = twoTerrains();
+    const [road, block] = tileset.terrains;
+    const withElevation = { ...tileset, terrains: [{ ...road, elevation: -1 }, block] };
+    expect(getErrors(withElevation)).toEqual(["terrains[0].elevation must be an integer from 0 to 16 when present."]);
+  });
+});

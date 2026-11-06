@@ -47,7 +47,7 @@ function createSpriteSheetThumbnail(sheet: SpriteSheetAsset, clock: AnimationClo
 const THUMBNAIL_MAP_SIZES = {
   topdown: { width: 12, height: 12 },
   sideview: { width: 16, height: 9 },
-  isometric: { width: 9, height: 9 },
+  isometric: { width: 12, height: 12 },
 } as const;
 /** A fixed seed keeps the gallery stable between reloads. */
 const THUMBNAIL_MAP_SEED = 7;
@@ -55,7 +55,7 @@ const THUMBNAIL_MAP_SEED = 7;
 function createTilesetThumbnail(tileset: TilesetAsset): HTMLCanvasElement {
   const canvas = createElement("canvas", { className: "pixel-canvas pixel-canvas--fit" });
   const size = THUMBNAIL_MAP_SIZES[tileset.projection.type];
-  const map = generateTileMap(tileset.projection, tileset.terrains.length, { ...size, seed: THUMBNAIL_MAP_SEED });
+  const map = generateTileMap(tileset, { ...size, seed: THUMBNAIL_MAP_SEED });
   drawRgbaImage(canvas, renderTileMap(tileset, map));
   return canvas;
 }

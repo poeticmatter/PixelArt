@@ -107,15 +107,27 @@ tile for each mask 0–15. Cells beyond the map edge count as filled.
   missing neighbours and are transparent beyond, so the layer below shows through. Generated
   maps nest the layers: every grass cell is also a sand cell.
 - Extra tiles with a mask already covered are random variants, picked per cell (e.g. flowers).
-- `projection` decides tile shape, draw order and the kind of map generated:
-  - `topdown`: square grid; maps are islands, with terrains as contour rings.
-  - `sideview`: square grid for platformers; maps are rolling ground with floating platforms,
-    and later terrains are buried deeper (stone under dirt). N missing = walkable top surface.
+- `projection` decides tile shape and draw order:
+  - `topdown`: square grid.
+  - `sideview`: square grid for platformers. N missing = walkable top surface.
   - `isometric` + `footprintHeight`: tiles are `tileWidth` × `footprintHeight` diamonds
     (2:1, so footprintHeight = tileWidth / 2), with `tileHeight - footprintHeight` px of side
-    faces below. Each terrain layer is raised by that depth, so maps are terraced islands. Grid
-    directions on screen: N ↗, E ↘, S ↙, W ↖. Draw the left side face when S is missing, the
-    right one when E is missing.
+    faces below. Grid directions on screen: N ↗, E ↘, S ↙, W ↖. Draw the left side face when
+    S is missing, the right one when E is missing.
+- Isometric terrains can set `"elevation"` in steps of that side-face depth (default: the
+  terrain's index, which makes terraces). Make the side faces exactly one step tall: a raised
+  tile's walls then reach down to street level, e.g. a building at elevation 1, a tower on it at 2.
+- `generator` (optional) picks the random map:
+  - `{ "type": "island" }` (default for top-down and isometric): terrains nest like contour
+    rings, so every grass cell is also a sand cell.
+  - `{ "type": "hills" }` (default for side view): rolling ground with floating platforms;
+    later terrains are buried deeper (stone under dirt).
+  - `{ "type": "city", "roles": { "road": "...", "rail": "...", "building": "...", "tower": "...",
+    "walkway": "..." } }`: a street grid where one line is a railway, buildings set back by
+    sidewalks, towers on some roofs, and walkways bridging streets and rails between
+    buildings. Each role names the terrain that draws it; leave a role out to skip it.
+    Walkway cells have no walkway neighbour toward the roofs they land on, so draw walkway
+    end tiles running straight through the tile.
 - `npm run map -- <id> --seed N --scale 2 --out <dir>` renders a random map so you can check
   the tiles in context.
 

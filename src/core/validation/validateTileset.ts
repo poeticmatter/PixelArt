@@ -1,4 +1,5 @@
 import { ALL_MASKS, describeMask } from "../tileset/bitmask.ts";
+import { validateMapGenerator } from "./validateMapGenerator.ts";
 import {
   type Fields,
   isFields,
@@ -12,6 +13,8 @@ import {
 } from "./primitives.ts";
 
 const PROJECTION_TYPES = ["topdown", "sideview", "isometric"];
+/** Generous ceiling: taller stacks than this would not fit a sensible isometric map. */
+export const MAX_ELEVATION = 16;
 
 function validateProjection(projection: unknown, tileWidth: unknown, tileHeight: unknown): string[] {
   if (!isFields(projection) || !PROJECTION_TYPES.includes(String(projection.type))) {
@@ -53,6 +56,9 @@ function validateTerrain(terrain: unknown, index: number, shape: MatrixShape): s
     return [`${path} must be an object.`];
   }
   const errors = isNonEmptyString(terrain.name) ? [] : [`${path}.name must be a non-empty string.`];
+  if (terrain.elevation !== undefined && !isIntegerInRange(terrain.elevation, 0, MAX_ELEVATION)) {
+    errors.push(`${path}.elevation must be an integer from 0 to ${MAX_ELEVATION} when present.`);
+  }
   if (!Array.isArray(terrain.tiles)) {
     return [...errors, `${path}.tiles must be an array.`];
   }
@@ -106,6 +112,7 @@ export function validateTilesetFields(fields: Fields): string[] {
   return [
     ...validateBackground(fields.background, shape),
     ...findDuplicateTerrainNames(terrains),
+    ...validateMapGenerator(fields.generator, terrains),
     ...terrains.flatMap((terrain, index) => validateTerrain(terrain, index, shape)),
   ];
 }

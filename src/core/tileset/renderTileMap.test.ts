@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { RgbaImage } from "../render.ts";
 import { createTestTileset } from "../testAssets.ts";
-import type { TileMap } from "./mapGenerator.ts";
+import type { TileMap } from "./tileMap.ts";
 import { renderTileMap } from "./renderTileMap.ts";
 
 /** In the test tileset, a tile's red channel is its mask + 1; 0 means nothing was drawn. */
@@ -61,6 +61,23 @@ describe("renderTileMap in isometric projection", () => {
     const image = renderTileMap(tileset, emptyMap);
     // Width: (3 + 2) diamonds of half-width 8. Height: one 4px rise, 3 half-height steps, one tile.
     expect({ width: image.width, height: image.height }).toEqual({ width: 40, height: 4 + 3 * 4 + 12 });
+  });
+});
+
+describe("renderTileMap with explicit elevations", () => {
+  it("raises a terrain by its own elevation instead of its layer index", () => {
+    const tileset = createTestTileset({
+      projection: { type: "isometric", footprintHeight: 8 },
+      tileWidth: 16,
+      tileHeight: 12,
+      terrains: [
+        { name: "street", elevation: 0, tiles: [] },
+        { name: "tower", elevation: 3, tiles: [] },
+      ],
+    });
+    const image = renderTileMap(tileset, { width: 1, height: 1, layers: [[], []] });
+    // Three 4px steps of headroom above a single 12px tile.
+    expect(image.height).toBe(3 * 4 + 12);
   });
 });
 
