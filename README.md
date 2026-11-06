@@ -76,3 +76,10 @@ with idle, walk and jump animations.
 - `neon-sprawl`: isometric cyberpunk city. It has roads with lane markings and zebra crossings, a railway
   with level crossings, buildings with lit windows, neon-rimmed towers, and elevated walkways on
   pillars. It uses the `city` map generator and per-terrain elevation.
+- `neon-sprawl-hd`: the same city at much higher fidelity, with 64×64 tiles and a 63-colour palette. Details include:
+  - beveled paving slabs, curbs with visible faces, and roads with manholes and neon-reflecting puddles
+  - ballast, wooden sleepers and highlighted rails
+  - office windows over lit or shuttered storefronts, and blade signs
+  - rooftop AC units, skylights, billboards and vents
+  - glass curtain-wall towers with neon corners and helipads
+  - skybridges with glass railings and lit undersides

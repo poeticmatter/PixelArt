@@ -87,3 +87,19 @@ describe("renderTileMap validation", () => {
     expect(() => renderTileMap(createTestTileset(), map)).toThrow(/2 layers/);
   });
 });
+
+describe("renderTileMap variant weights", () => {
+  it("picks heavier variants proportionally more often", () => {
+    const base = createTestTileset();
+    const [land] = base.terrains;
+    // Mask 15 gets a second variant (palette index 1, i.e. mask-0 colour) weighted 9× the original.
+    const tiles = [...(land?.tiles ?? []), { mask: 15, pixels: [[1]], weight: 9 }];
+    const tileset = { ...base, terrains: [{ name: "land", tiles }] };
+    const size = 30;
+    const map: TileMap = { width: size, height: size, layers: [Array.from({ length: size }, () => Array<boolean>(size).fill(true))] };
+    const image = renderTileMap(tileset, map);
+    let heavyCount = 0;
+    for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) if (readMaskAt(image, x, y) === 0) heavyCount++;
+    expect(heavyCount / (size * size)).toBeGreaterThan(0.8);
+  });
+});

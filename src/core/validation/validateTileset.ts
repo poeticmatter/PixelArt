@@ -42,6 +42,9 @@ function validateTile(tile: unknown, path: string, shape: MatrixShape): string[]
   if (!isIntegerInRange(tile.mask, 0, ALL_MASKS.length - 1)) {
     errors.push(`${path}.mask must be an integer from 0 to ${ALL_MASKS.length - 1}.`);
   }
+  if (tile.weight !== undefined && !(typeof tile.weight === "number" && Number.isFinite(tile.weight) && tile.weight > 0)) {
+    errors.push(`${path}.weight must be a positive number when present.`);
+  }
   return errors;
 }
 

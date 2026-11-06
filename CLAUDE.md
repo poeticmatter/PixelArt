@@ -107,6 +107,8 @@ tile for each mask 0–15. Cells beyond the map edge count as filled.
   missing neighbours and are transparent beyond, so the layer below shows through. Generated
   maps nest the layers: every grass cell is also a sand cell.
 - Extra tiles with a mask already covered are random variants, picked per cell (e.g. flowers).
+  An optional `"weight"` (default 1) sets how often each variant is picked, e.g. a plain roof
+  at weight 12 next to four rooftop-equipment variants at weight 1.
 - `projection` decides tile shape and draw order:
   - `topdown`: square grid.
   - `sideview`: square grid for platformers. N missing = walkable top surface.
@@ -136,7 +138,10 @@ tile for each mask 0–15. Cells beyond the map edge count as filled.
 1. Sketch in a scratch script: one string per row with a hex character per pixel (`.` for 0).
    For sheets, define body parts once and compose the frames from them. For tilesets, write a
    function from mask to tile (insets, rims and side faces where neighbours are missing) rather
-   than drawing 16 tiles by hand. Convert to JSON.
+   than drawing 16 tiles by hand. Convert to JSON. For detailed isometric art, work in grid
+   coordinates (u, v, height) and project to pixels, so faces, boxes and patterns line up
+   between tiles. Wall trims must depend on the mask, e.g. corner highlights only where the
+   wall actually turns a corner, or continuous walls show seams at every tile.
 2. Write the JSON file under `library/`.
 3. Run `npm run validate`. Errors give exact locations, e.g. `animations[1].frames[2].pixels[3][4]`.
 4. **Look at the result.** Run `npm run export -- <id> --scale 12 --out <scratch dir>`, then

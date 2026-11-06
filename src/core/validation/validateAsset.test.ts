@@ -170,3 +170,14 @@ describe("validateAsset for tileset generators and elevation", () => {
     expect(getErrors(withElevation)).toEqual(["terrains[0].elevation must be an integer from 0 to 16 when present."]);
   });
 });
+
+describe("validateAsset for tile variant weights", () => {
+  it("rejects a non-positive weight", () => {
+    const tileset = createTestTileset();
+    const [land] = tileset.terrains;
+    const tiles = [...(land?.tiles ?? []), { mask: 0, pixels: [[1]], weight: 0 }];
+    expect(getErrors({ ...tileset, terrains: [{ name: "land", tiles }] })).toEqual([
+      "terrains[0].tiles[16].weight must be a positive number when present.",
+    ]);
+  });
+});

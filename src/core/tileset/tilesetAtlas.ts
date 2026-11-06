@@ -7,6 +7,8 @@ interface TileRect {
   mask: number;
   /** Readable form of the mask, e.g. "N+E". */
   neighbors: string;
+  /** Relative pick frequency among variants with the same mask, when the tileset sets one. */
+  weight?: number;
   x: number;
   y: number;
   width: number;
@@ -20,7 +22,7 @@ export interface TilesetMetadata {
   tileHeight: number;
   projection: Projection;
   maskBits: typeof NEIGHBOR_BITS;
-  background?: Omit<TileRect, "mask" | "neighbors">;
+  background?: Omit<TileRect, "mask" | "neighbors" | "weight">;
   terrains: { name: string; tiles: TileRect[] }[];
 }
 
@@ -69,6 +71,7 @@ export function createTilesetMetadata(tileset: TilesetAsset, imageFileName: stri
       tiles: sortTilesByMask(terrain.tiles).map((tile, column) => ({
         mask: tile.mask,
         neighbors: describeMask(tile.mask),
+        ...(tile.weight !== undefined && { weight: tile.weight }),
         x: column * width,
         y: (terrainIndex + rowOffset) * height,
         width,

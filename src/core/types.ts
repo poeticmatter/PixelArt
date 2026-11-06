@@ -69,6 +69,8 @@ export interface Tile {
   /** Which neighbours share this terrain: N=1, E=2, S=4, W=8 (see core/tileset/bitmask.ts). */
   mask: number;
   pixels: PixelMatrix;
+  /** How often this variant is picked relative to others with the same mask. Defaults to 1. */
+  weight?: number;
 }
 
 export interface Terrain {
